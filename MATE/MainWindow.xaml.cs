@@ -72,6 +72,8 @@ namespace MATE
 
                 var totalSpan = ShutdownTime - new TimeAdvanced().SetTime(DateTime.Now);
 
+                var totalMinutesToDecrement = totalSpan.GetTotalMinutes();
+
                 if(totalSpan.Hours < 0)
                 {
                     totalSpan.ChangeTime(new TimeSpan(24, 0, 0));
@@ -90,13 +92,11 @@ namespace MATE
                 {
                     if(IsWarningNeeded)
                     {
-                        IsWarningNeeded = false;
-
-                        if (totalSpan.Minutes == 30)
+                        if (totalMinutesToDecrement == 30)
                         {
                             MessageBox.Show("Get ready. It's only 30 minutes left!");
                         }
-                        else if(totalSpan.Minutes == 1)
+                        else if(totalMinutesToDecrement == 1)
                         {
                             MessageBox.Show("Get ready. It's only 1 minute left!");
                         }
@@ -122,6 +122,7 @@ namespace MATE
                     //TEMP_COUNTER++;
 
                     Thread.Sleep(new TimeSpan(0, 1, 0));
+                    totalMinutesToDecrement--;
                 }
 
                 await Dispatcher.InvokeAsync(() =>
