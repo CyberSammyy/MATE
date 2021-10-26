@@ -16,13 +16,11 @@ namespace MATE
         public delegate Task InTimeCheckerDelegate();
 
         public event InTimeCheckerDelegate Shutdown;
-
-        public TimeAdvanced ShutdownTime { get; private set; }
-
+        public DateTime ShutdownTime { get; private set; }
+        public TimeSpan TimeLeftToShutdown { get; set; }
         public bool IsCancellationRequested { get; set; } = false;
-
         public bool IsWarningNeeded { get; set; }
-
+        public bool IsNotificationModeEnabled { get; set; }
 
         public MainWindow()
         {
@@ -30,7 +28,7 @@ namespace MATE
             setDeadlineButton.IsEnabled = true;
             cancelDeadlineButton.IsEnabled = false;
             isWarningNeeded.IsChecked = false;
-            ShutdownTime = new TimeAdvanced();
+            isShutDownRequired.IsChecked = false;
         }
 
         private async void setDeadlineButton_Click(object sender, RoutedEventArgs e)
@@ -43,7 +41,21 @@ namespace MATE
             setDeadlineButton.IsEnabled = false;
             cancelDeadlineButton.IsEnabled = true;
 
-            ShutdownTime.ChangeTime(deadlineTime.SelectedTime.Value);
+            ShutdownTime = deadlineTime.SelectedTime.Value;
+
+            if(ShutdownTime.Hour == 0)
+            {
+                ShutdownTime = ShutdownTime.AddHours(24);
+            }
+
+            TimeLeftToShutdown = ShutdownTime - DateTime.Now;
+
+            if(TimeLeftToShutdown.Hours < 0 || TimeLeftToShutdown.Minutes < 0 || TimeLeftToShutdown.Seconds < 0)
+            {
+                var newTimeSpan = TimeLeftToShutdown.Add(new TimeSpan(24, 0, 0));
+                TimeLeftToShutdown = newTimeSpan;
+            }
+
             Shutdown += OnShutdown;
 
             locker = new object();
@@ -54,6 +66,9 @@ namespace MATE
         private void cancelDeadlineButton_Click(object sender, RoutedEventArgs e)
         {
             Shutdown -= OnShutdown;
+
+            deadlineTime.SelectedTime = null;
+
             IsCancellationRequested = true;
 
             setDeadlineButton.IsEnabled = true;
@@ -61,42 +76,30 @@ namespace MATE
 
             isWarningNeeded.IsChecked = false;
 
-            timeLeftProgress.Value = 0;
+            timeLeftProgress.ClearValue(UidProperty);
         }
 
         private async Task CheckingCycle()
         {
             await Task.Run(async () =>
             {
-                //int TEMP_COUNTER = 0;
-
-                var totalSpan = ShutdownTime - new TimeAdvanced().SetTime(DateTime.Now);
-
-                var totalMinutesToDecrement = totalSpan.GetTotalMinutes();
-
-                if(totalSpan.Hours < 0)
-                {
-                    totalSpan.ChangeTime(new TimeSpan(24, 0, 0));
-                }
-
-                int timeLeftInMinutes = totalSpan.GetTotalMinutes();
+                int timeLeftInSeconds = (int)TimeLeftToShutdown.TotalSeconds;
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    timeLeftProgress.Maximum = 100;
+                    timeLeftProgress.Maximum = timeLeftInSeconds;
                     timeLeftProgress.Value = 0;
                 });
 
-                while (/*TEMP_COUNTER < timeLeftInMinutes*/ DateTime.Now.Hour != ShutdownTime.Hours ||
-                       DateTime.Now.Minute != ShutdownTime.Minutes)
+                for(int timeCounter = timeLeftInSeconds; timeCounter >= 0; timeCounter--)
                 {
                     if(IsWarningNeeded)
                     {
-                        if (totalMinutesToDecrement == 30)
+                        if (timeCounter == 1800)
                         {
                             MessageBox.Show("Get ready. It's only 30 minutes left!");
                         }
-                        else if(totalMinutesToDecrement == 1)
+                        else if(timeCounter == 60)
                         {
                             MessageBox.Show("Get ready. It's only 1 minute left!");
                         }
@@ -109,25 +112,22 @@ namespace MATE
 
                     await Dispatcher.InvokeAsync(() =>
                     {
-                        if(timeLeftInMinutes - 1 == 0)
+                        if (timeCounter - 1 == 0)
                         {
-                            timeLeftProgress.Value += (int)100 / 1;
+                            timeLeftProgress.Value++;
                         }
                         else
                         {
-                            timeLeftProgress.Value += (int)100 / timeLeftInMinutes - 1;
+                            timeLeftProgress.Value++;
                         }
                     });
 
-                    //TEMP_COUNTER++;
-
-                    Thread.Sleep(new TimeSpan(0, 1, 0));
-                    totalMinutesToDecrement--;
+                    await Task.Delay(new TimeSpan(0, 0, 1));
                 }
 
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    timeLeftProgress.Value = 100;
+                    timeLeftProgress.Value = timeLeftInSeconds;
                 });
 
                 await Shutdown();
@@ -159,7 +159,7 @@ namespace MATE
             psi.CreateNoWindow = true;
             psi.UseShellExecute = false;
             MessageBox.Show("ЫЫЫЫЫЫЫЫЫЫЫЫ");
-        
+
             await Dispatcher.InvokeAsync(() =>
             {
                 cancelDeadlineButton.IsEnabled = false;
@@ -178,6 +178,16 @@ namespace MATE
         private void isWarningNeeded_Unchecked(object sender, RoutedEventArgs e)
         {
             IsWarningNeeded = false;
+        }
+
+        private void isShutDownRequired_Checked(object sender, RoutedEventArgs e)
+        {
+            IsNotificationModeEnabled = false;
+        }
+
+        private void isShutDownRequired_Unchecked(object sender, RoutedEventArgs e)
+        {
+            IsNotificationModeEnabled = true;
         }
     }
 }

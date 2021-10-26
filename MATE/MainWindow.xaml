@@ -20,17 +20,23 @@
         </Style>
     </Window.Resources>
     <Grid x:Name="mainGrid" Style="{DynamicResource GridStyle1}" Width="282">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35*"/>
+            <RowDefinition Height="33*"/>
+        </Grid.RowDefinitions>
         <Grid.Background>
             <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
                 <GradientStop Color="#FFE45858"/>
                 <GradientStop Color="#FF3139D1" Offset="1"/>
             </LinearGradientBrush>
         </Grid.Background>
-        
+
         <materialDesign:TimePicker x:Name="deadlineTime" HorizontalAlignment="Center" Margin="0,27,0,0" VerticalAlignment="Top" Width="228" BorderBrush="#FF5D2702" SelectedTimeFormat="Long" Is24Hours="True"/>
         <CheckBox x:Name="isWarningNeeded" Checked="isWarningNeeded_Checked" Unchecked="isWarningNeeded_Unchecked" Content="With warning (30 minutes, 1 minute)" HorizontalAlignment="Left" Margin="27,56,0,0" VerticalAlignment="Top" Background="#FFEC9152" BorderBrush="#FF632902"/>
-        <Button Content="Set deadline" x:Name="setDeadlineButton" Click="setDeadlineButton_Click" HorizontalAlignment="Center" Margin="0,79,0,0" VerticalAlignment="Top" Width="228" Background="#FFEC9152"/>
-        <Button Content="Cancel" x:Name="cancelDeadlineButton" Click="cancelDeadlineButton_Click" HorizontalAlignment="Center" Margin="0,116,0,0" VerticalAlignment="Top" Width="228" Background="#FFD48F5E"/>
-        <ProgressBar x:Name="timeLeftProgress" Margin="27,173,27,215" Height="20"/>
+        <Button Content="Set deadline" x:Name="setDeadlineButton" Click="setDeadlineButton_Click" HorizontalAlignment="Center" Margin="0,6,0,0" VerticalAlignment="Top" Width="228" Background="#FFEC9152" Grid.Row="1"/>
+        <Button Content="Cancel" x:Name="cancelDeadlineButton" Click="cancelDeadlineButton_Click" HorizontalAlignment="Center" VerticalAlignment="Top" Width="228" Background="#FFD48F5E" Margin="0,43,0,0" Grid.Row="1"/>
+        <ProgressBar x:Name="timeLeftProgress" Margin="27,89,27,89" Height="20" Grid.Row="1"/>
+        <CheckBox x:Name="isShutDownRequired" Checked="isShutDownRequired_Checked" Unchecked="isShutDownRequired_Unchecked" Content="Notification Mode (Without shutdown)" HorizontalAlignment="Left" Margin="27,79,0,0" VerticalAlignment="Top" Background="#FFEC9152" BorderBrush="#FF632902"/>
+        <TextBox HorizontalAlignment="Center" Margin="0,102,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="228" Height="102" BorderBrush="#FF590755" Background="#1F725A9B" SelectionBrush="#FF71E258" UseLayoutRounding="True" Style="{DynamicResource MaterialDesignFloatingHintTextBox}"/>
     </Grid>
 </Window>
